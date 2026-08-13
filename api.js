@@ -78,7 +78,25 @@ window.ShiftFlowAPI = (function () {
     checkBackend: checkBackend,
     getState: function () { return get("/state"); },
     setOrg: function (orgType) { return post("/org", { orgType: orgType }); },
-    addWorker: function (worker) { return post("/workers", worker); },
+    addWorker: async function (worker) {
+  const { data, error } = await supabase
+    .from("workers")
+    .insert({
+      name: worker.name,
+      role: worker.role,
+      on_shift: worker.status === "on"
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Supabase: failed to add worker:", error);
+    throw error;
+  }
+
+  console.log("Supabase: worker added:", data);
+  return data;
+},
     removeWorker: function (id) { return del("/workers/" + id); },
     setWorkerPin: function (id, pin) { return post("/workers/" + id + "/pin", { pin: pin }); },
     setDuty: function (workerId, day, duty) { return post("/duties", { workerId: workerId, day: day, duty: duty }); },
